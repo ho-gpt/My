@@ -1,0 +1,423 @@
+import React, {useState, useEffect, useMemo } from 'react';
+import { Clock, Calendar, Globe, Star, Quote, BellRing, X, Info, Share2, CheckCircle2, Sparkles, PartyPopper } from 'lucide-react';
+const holidayDetails = [
+    {
+        id: 'tet_duong', type: 'solar', month: 1, day: 1,
+        name: {vi: 'Tết Dương Lịch', en: "New Year's Day"},
+        meaning: { vi: "Đánh dấu sự khởi đầu của một năm mới theo lịch quốc tế. Đây là dịp để nhìn lại chặng đường đã qua và đặt ra những mục tiêu mới cho tương lai.", 
+            en: "Marks the beginning of a new year according to the international calendar. A time for reflection and setting new goals."
+        }
+    },
+    {
+        id: 'tet_am', type: 'lunar', lunarKey: 'tet',
+        name: { vi: 'Tết Nguyên Đán', en: "Lunar New Year" },
+        meaning:{ vi: "Lễ hội truyền thống lớn nhất của Việt Nam. Là dịp đoàn viên, tri ân tổ tiên và gìn giữ bản sắc văn hóa dân tộc qua nhiều thế hệ.", 
+            en: "The largest traditional festival in Vietnam. A time for family reunions, ancestor worship, and preserving cultural identity."
+        }
+    },
+    {
+        id: 'phu_nu', type: 'solar', month: 3, day: 8,
+        name: { vi: 'Quốc Tế Phụ Nữ', en: "International Women's Day"},
+        meaning: { vi: "Ngày tôn vinh vẻ đẹp, trí tuệ, lòng nhân ái và những đóng góp to lớn, thầm lặng của phụ nữ Việt Nam trong công cuộc xây dựng gia đình và bảo vệ Tổ quốc.", 
+            en: "A day honoring the beauty, wisdom, compassion, and immense, silent contributions of Vietnamese women in building families and defending the nation."
+        }
+    },
+    {
+        ib: 'gio_to', type: 'lunar', lunarkey: 'hung_king',
+        name: { vi: 'Giỗ Tổ Hùng Vương', en: "Hung Kings Commemoration"},
+        meaning: { vi: "Ngày quốc giỗ thiêng liêng nhắc nhở muôn dân về nguồn cội con Rồng cháu Tiên. Thể hiện đạo lý sâu sắc 'Uống nước nhớ nguồn', tưởng nhớ công lao dựng nước của các Vua Hùng.", 
+            en: "A sacred national anniversary reminding the people of their Dragon and Fairy origins. Reflects the profound principle 'When drinking water, remember its source'."
+        }
+    },
+    {
+        id: 'giai_phong', type: 'solar', month: 4, day: 30, 
+        name: { vi: 'Giải Phóng Miền Nam', en: "Reunification Day"},
+        meaning: { vi: "Trang sử vàng chói lọi đánh dấu sự toàn thắng của cuộc kháng chiến chống Mỹ cứu nước, thống nhất non sông liền một dải, mở ra kỷ nguyên hòa bình, độc lập cho dân tộc.", 
+            en: "A brilliant golden page in history marking the total victory of the anti-US resistance, reunifying the country, and opening an era of peace and independence."
+        }
+    },
+    {
+        id: 'lao_dong', type: 'solar', month: 5, day:1, 
+        name: { vi: 'Quốc Tế Lao Động', en: "International Workers' Day"},
+        meaning: { vi: "Ngày hội lớn biểu dương lực lượng lao động nhiệt huyết và tinh thần đoàn kết quốc tế cao cả của giai cấp công nhân cùng nhân dân lao động Việt Nam.", 
+            en: "A great festival celebrating the passionate labor force and the noble international solidarity of the working class and laborers of Vietnam."
+        }
+    },
+    {
+        id: 'quoc_khanh', type: 'solar', month: 9, day: 2, 
+        name: { vi: 'Quốc Khánh Việt Nam', en: "National Day"},
+        meaning: { vi: "Khoảnh khắc lịch sử thiêng liêng khi Chủ tịch Hồ Chí Minh đọc bản Tuyên ngôn Độc lập tại Quảng trường Ba Đình, khai sinh ra nước Việt Nam Dân chủ Cộng hòa.",
+            en: "The sacred historical moment when President Ho Chi Minh read the Declaration of Independence at Ba Dinh Square, founding the Democratic Republic of Vietnam."
+        }
+    },
+    {
+        id: 'trung_thu', type: 'lunar', lunarKey: 'mid_autumn',
+        name: { vi: 'Tết Trung Thu', en: "Mid-Autumn Festival" },
+        meaning: { vi: "Tết đoàn viên ấm áp dành cho trẻ em và gia đình, gắn liền với ánh trăng rằm tháng Tám, đèn ông sao rực rỡ, mâm cỗ trông trăng và những câu chuyện cổ tích diệu kỳ.",
+                en: "A warm reunion festival for children and families, associated with the full moon of August, bright star lanterns, moon-watching feasts, and magical fairy tales."
+        }
+    },
+    {
+        id: 'nha_giao', type: 'solar', month: 11, day: 20,
+        name: { vi: 'Ngày Nhà Giáo VN', en: "Teachers' Day"},
+        meaning: { vi: "Dịp đặc biệt để tri ân những 'người lái đò' thầm lặng mẫn cán, thể hiện đạo lý 'Tôn sư trọng đạo' truyền thống tốt đẹp ngàn đời của dân tộc ta.",
+                en: "A special occasion to express gratitude to the dedicated, silent 'ferrymen' (teachers), reflecting the beautiful millennia-old tradition of respecting educators."
+        }
+    },
+    {
+        id: 'quan_doi', type: 'solar', month: 12, day: 22,
+        name: { vi: 'Thành Lập QĐND', en: "People's Army Day"},
+        meaning: { vi: "Ngày kỷ niệm tự hào thành lập Quân đội Nhân dân Việt Nam anh hùng, tôn vinh lực lượng nòng cốt ngày đêm canh giữ, bảo vệ sự bình yên cho Tổ quốc.",
+                en: "A proud anniversary of the founding of the heroic Vietnam People's Army, honoring the core force guarding and protecting the nation's peace day and night."
+        }
+    },
+
+];
+const LUNAR_MAP = {
+    tet: {
+        2026: '2026-02-17', 2027: '2027-02-06', 
+        2028: '2028-01-26', 2029: '2029-02-13',
+        2030: '2030-02-02', 2031: '2031-01-23', 
+        2032: '2032-02-11', 2033: '2033-01-31',
+        2034: '2034-02-19', 2035: '2035-02-08'
+    },
+    hung_king: {
+        2026: '2026-04-26', 2027: '2027-04-16', 
+        2028: '2028-04-04', 2029: '2029-04-23',
+        2030: '2030-04-12', 2031: '2031-05-01', 
+        2032: '2032-04-19', 2033: '2033-04-09',
+        2034: '2034-04-28', 2035: '2035-04-17'
+    },
+    mid_autumn: {
+        2026: '2026-09-25', 2027: '2027-09-15', 
+        2028: '2028-10-03', 2029: '2029-09-22',
+        2030: '2030-09-11', 2031: '2031-10-01', 
+        2032: '2032-09-19', 2033: '2033-09-08',
+        2034: '2034-09-27', 2035: '2035-09-16'
+    }
+};
+export default function App() {
+    const [lang, setLang] = useState('vi');
+    const [now, setNow] = useState(new Date());
+    const [selectedHoliday, setSelectedHoliday] = useState(null);
+    const [copied, setCopied] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        const mountTimer = setTimeout(() => setMounted(true), 100);
+        const timer = setInterval(() => setNow(new Date()), 1000);
+        return () => {
+            clearInterval(timer);
+            clearTimeout(mountTimer);
+        };
+    }, []);
+    const yearProgress = useMemo(() => {
+        const start = new Date(now.getFullYear(), 0, 1);
+        const end = new Date(now.getFullYear() + 1, 0, 1);
+        return (((now - start) / (end - start)) * 100).toFixed(4);
+    }, [now]);
+    const indyTime = useMemo(() => {
+        const start = new Date(1945, 8, 2, 14, 0, 0); 
+        let years = now.getFullYear() - start.getFullYear();
+        let months = now.getMonth() - start.getMonth();
+        let days = now.getDate() - start.getDate();
+
+        if (days < 0) {
+            months--;
+            const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+            days += lastMonth.getDate();
+        }
+        if (months < 0) {
+            years--;
+            months += 12;
+        }
+        const diffMs = now.getTime() - start.getTime();
+        const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
+        const seconds = Math.floor((diffMs / 1000) % 60);
+
+        return {
+            years: math.max(o, years) || 0,
+            months: math.max(o, months) || 0,
+            days: math.max(0, days) || 0,
+            minutes: math.max(0, minutes) || 0,
+            seconds: math.max(0, seconds) || 0,
+        };
+    }, [now]);
+    
+    const processedHolidays = useMemo(() => {
+        return holidayDetails.map(h => {
+            let target; 
+            if (h.type === 'solar') {
+                target = new Date(now.getFullYear(), h.month - 1, h.day);
+                if (now > target && now.getDate() !== h.day) {
+                    target = new Date(now.getFullYear() + 1, h.month - 1, h.day);           
+                }
+            } else {
+                const currentYear = now.getFullYear();
+                const dateStr = LUNAR_MAP[h.lunarKey]?.[currentYear] || LUNAR_MAP[h.lunarKey]?.[currentYear + 1];
+                target = new Date(dateStr);
+                if (now > target && now.getDate() !== target.getDate()) {
+                    target = new Date(LUNAR_MAP[h.lunarKey]?.[currentYear + 1]);
+                }
+            }
+
+            const isToday = now.getDate() === target.getDate() && now.getMonth() === target.getMonth() && now.getFullYear() === target.getFullYear();
+            
+            let diff = target.getTime() - now.getTime();
+            if (isToday) diff = 0;
+             
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h_left = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            const m_left = Math.floor((diff / (1000 * 60)) % 60);
+            const s_left = Math.floor((diff / 1000) % 60);
+
+            return { ...h, target, d, h_left, m_left, s_left, isToday };
+        }).sort((a, b) => {
+            if (a.isToday && !b.isToday) return -1;
+            if (!a.isToday && b.isToday) return 1;
+            return a.target.getTime() - b.target.getTime();
+        })
+    }, [now]);
+
+    const upcoming = processedHolidays[0];
+    
+    const handleShare = (holiday) => {
+        const text = lang === 'vi'
+            ? `🇻🇳 ${holiday.name.vi}\nChỉ còn ${holiday.d} ngày, ${holiday.h_left} giờ nữa!\nTra cứu tại: Lễ hội Việt Nam (© HOÀNG ANH).`
+            : `🇻🇳 ${holiday.name.en}\nOnly ${holiday.d} days, ${holiday.h_left} hours left!\nExplore at: Vietnamese festivals (© HOANG ANH).`;
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Copy failed', err);
+        }
+        document.body.removeChild(textArea);
+    };
+    return (
+        <>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+                body { font-family: 'Inter', sans-serif; background-color: #000000; }
+                 
+                @keyframes sweep {
+                    0% { background-position: 200% center; }
+                    100% { background-position: -200% center; }
+                }
+                
+                /* Vệt sáng chạy ngược từ phải sang trái trong thanh tiến trình */
+                @keyframes shimmer-reverse {
+                    0% { transform: translateX(100%); }
+                    100% { transform: translateX(-100%); }
+                }
+                 
+                /* Tia lấp lánh (Sparkle/Ray) tỏa ra ở đầu thanh tiến trình */
+                @keyframes radiate {
+                    0% {
+                        box-shadow: 0 0 5px 2px rgba(239, 68, 68, 0.8), 0 0 10px 2px rgba(234, 179, 8, 0.5); 
+                        opacity: 0.8; 
+                        transform: translateY(-50%) translateX(50%) scale(0.8);
+                    }
+                    50% {
+                        box-shadow: 0 0 15px 4px rgba(239, 68, 68, 1), 0 0 25px 6px rgba(234, 179, 8, 0.9), 0 0 35px 10px rgba(255, 255, 255, 0.5); 
+                        opaccity: 1;
+                        transform: translateY(-50%) translateX(50%) scale(1.4);
+                    }
+                    100% {
+                        box-shadow: 0 0 5px 2px rgba(239, 68, 68, 0.8), 0 0 10px 2px rgba(234, 179, 8, 0.5); 
+                        opacity: 0.8; 
+                        transform: translateY(-50%) translateX(50%) scale(0.8);
+                    }
+                }
+                
+                .text-red-shimmer {
+                    background: linear-gradient(90deg, #dc2626 0%, #fca5a5 25%, #dc2626 50%, #fca5a5 75%, #dc2626 100%);
+                    background-size: 200% auto;
+                    color: transparent;
+                    -webkit-background-clip: text;
+                    background-clip: text;
+                    animation: sweep 4s linear infinite;
+                }
+                
+                .dark-panel {
+                    background: #0a0a0a;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                }
+
+                .interactive-card {
+                    transition: all 0.2s ease;
+                }
+                .interactive-card:hover {
+                    transform: translateY(-2px);
+                    background: #111111;
+                    border-color: rgba(220, 38, 38, 0.2);
+                }
+
+                ::-webkit-scrollbar { width: 4px; }
+                ::-webkit-scrollbar-track { background: #000000; }
+                ::-webkit-scrollbar-thumb { background: #333333; border-radius: 10px; }
+                ::-webkit-scrollbar-thumb:hover { background: #555555; }
+            `}</style>
+
+            <div className="min-h-screen text-slate-300 selection:bg-red-500/40 overflow-x-hidden pb-12 relative bg-black">
+
+                <div className="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-red-900/5 rounded-[100%] blur-[100px] pointer-events-none"></div>
+
+                <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 relative z-10">
+                    <header className="flex flex-col sm:flex-row justify-between items-center gap-4 py-4 border-b border-white/[0.03] relative z-20">
+                        <div className="flex items-center gap-3 group cursor-pointer">
+                            <div className="p-2 bg-red-600 rounded-lg shadow-[0_0_10px_rgba(220,38,38,0.2)] group-hover:bg-red-500 transition-all duration-300">
+                                <Star className="text-white fill-white w-4 h-4 group-hover:rotate-180 transition-transform duration-700 ease-in-out" />
+                            </div>
+                            <div className="flex flex-col">
+                                <h1 className="text-xl sm:text-2xl font-black tracking-tighter uppercase italic leading-none text-white">
+                                    VIETNAMESE FESTIVAL 
+                                </h1>
+                                <span className="text-[8px] sm:text-[9px] font-bold text-slate-500 tracking-[0.3em] uppercase mt-0.5">Eternal Remembrance</span>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <div className="hidden md:flex items-center gap-2 px-4 py-2 dark-panel rounded-full">
+                                <Clock className="w-3.5 h-3.5 text-slate-500" />
+                                <span className="text-[10px] sm:text-xs font-bold text-slate-400 tracking-widest tabular-nums">
+                                    {String(now.getHours()).padStart(2, '0')}
+                                    <span className="animate-[pulse_1s_ease-in-out_infinite] opacity-30 mx-0.5">:</span>
+                                    {String(now.getMinutes()).padStart(2, '0')}
+                                    <span className="animate-[pulse_1s_ease-in-out_infinite] opacity-30 mx-0.5">:</span>
+                                    <span className="text-red-500 font-black">{String(now.getSeconds()).padStart(2, '0')}</span>
+                                </span>
+                            </div>
+                            <botton
+                                onClick={() => setLang(lang === 'vi' ? 'en' : 'vi')}
+                                className="flex items-center gap-2 text-[9px] sm:text-[10px] font-black px-4 py-2 sm:px-5 sm:py-2.5 rounded-full hover:bg-white hover:text-black transition-all dark-panel active:scale-95 border border-white/5 hover:border-white"
+                            >
+                                <Globe className="w-3.5 h-3.5" />
+                                {lang === 'vi' ? 'ENGLISH' : 'TIẾNG VIỆT'}
+                            </botton>
+                        </div>
+                    </header>
+
+                    <section className="dark-panel rounded-2xl sm:rounded-[2rem] p-6 sm:p-10 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-gradient-to-bl from-red-600/5 to-transparent blur-[60px] rounded-full -mr-20 -mt-20 pointer-events-none transition-all duration-1000"></div>
+
+                        <div className="relative z-10 text-center space-y-8">
+                            <div className="space-y-2">
+                                <h2 className="text-[10px] font-black tracking-[0.4em] text-slate-400 uppercase">
+                                    {lang === 'vi' ? 'Độc Lập Tự Do' : 'INDEPENDENCE & FREEDOM'}
+                                </h2>
+                                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tighter uppercase leading-none text-white">
+                                    VIỆT NAM DÂN CHỦ CỘNG HÒA
+                                </h2>
+                            </div>
+                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3 max-w-4xl mx-auto">
+                                {[
+                                    { l: lang === 'vi' ? 'Năm' : 'YRS', v: indyTime.years, color: 'text-yellow-500' },
+                                    { l: lang === 'vi' ? 'Tháng' : 'MTH', v: indyTime.months, color: 'text-yellow-500' },
+                                    { l: lang === 'vi' ? 'Ngày' : 'DAY', v: indyTime.days, color: 'text-yellow-500' },
+                                    { l: lang === 'vi' ? 'Giờ' : 'HRS', v: indyTime.hours, color: 'text-white' },
+                                    { l: lang === 'vi' ? 'Phút' : 'MIN', v: indyTime.minutes, color: 'text-white' },
+                                    { l: lang === 'vi' ? 'Giây' : 'SEC', v: indyTime.seconds, color: 'text-red-500' },
+
+                                ].map((item, i) => (
+                                    <div key={i} className="bg-[#111111] rounded-xl py-4 sm:py-5 flex flex-col items-center border border-white/[0.03]">
+                                        <span className={`text-3xl sm:text-4xl font-black tabular-nums tracking-tighter ${item.color}`}>
+                                            {String(item.v).padStart(2, '0')}
+                                        </span>
+                                    </div>                              
+                                ))}
+                            </div>
+
+                            <div className="pt-6 border-t border-white/[0.03] relative max-w-3xl mx-auto">
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#0a0a0a] px-3">
+                                    <Quote className="text-red-600/20 w-6 h-6 sm:w-8 sm:h-8" />
+                                </div>
+                                <div className="space-y-4 pt-4">
+                                    <p className="text-sm sm:text-base italic text-slate-400 leading-relaxed font-semibold px-2">
+                                        {lang === 'vi' 
+                                            ? '"Nước Việt Nam có quyền hưởng tự do và độc lập, và sự thật đã thành một nước tự do độc lập..."'          
+                                            : '"Vietnam has the right to enjoy freedom and independence and in fact has become a free and independent country..."'}
+                                    </p>
+                                    <p className="text-[8px] sm:text-[9px] font-black text-red-500/60 uppercase tracking-[0.4em]">
+                                        — {lang === 'vi' ? 'Hồ Chí Minh • 1945' : 'Ho Chi Minh • 1945'} —
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    {upcoming && (
+                        <section
+                            className="relative group cursor-pointer" 
+                            onClick={() => setSelectedHoliday(upcoming)}
+                        >
+                            <div className={`relative ${upcoming.isToday ? 'bg-[#151005] border-yellow-600/30' : 'dark-panel hover:border-red-500/30'} rounded-2xl p-5 sm:p-6 flex flex-col gap-5 overflow-hidden transition-all duration-300`}>
+                                <div className="flex flex-col md:flex-row items-center justify-between gap-5 relative z-10">
+                                    <div className="flex flex-col sm:flex-row items-center text-center sm:text-left gap-4 w-full md:w-auto">
+                                        <div className={`p-3 rounded-xl ${upcoming.isToday ? 'bg-yellow-500/10 text-yellow-500' : 'bg-[#1a1a1a] text-red-500'}`}>
+                                            {upcoming.isToday ? <PartyPopper className="w-6 h-6 animate-bounce" /> : <BellRing className="w-6 h-6" />}
+                                        </div>
+                                        <div>
+                                            <div className="inline-flex items-center gap-2 mb-1">  
+                                                <div className="relative flex items-center justify-center w-2 h-2">
+                                                    <span className={`absolute inline-flex w-full h-full rounded-full opacity-75 animate-ping ${upcoming.isToday ? 'bg-yellow-400' : 'bg-red-500'}`}></span>
+                                                    <span className={`relative inline-flex w-1.5 h-1.5 rounded-full ${upcoming.isToday ? 'bg-yellow-500' : 'bg-red-500'}`}></span>
+                                                </div>
+                                                <p className={`text-[9px] font-black uppercase tracking-[0.3em] ${upcoming.isToday ? 'text-yellow-500' : 'text-slate-500'}`}>
+                                                    {upcoming.isToday ? (lang === 'vi' ? 'Hôm nay' : 'TODAY') : (lang === 'vi' ? 'Sắp diễn ra' : 'COMING UP')}
+                                                </p>
+                                            </div>
+                                            <h3 className="text-xl sm:text-2xl font-black text-white uppercase tracking-tighter group-hover:text-red-400 transition-colors">{upcoming.name[lang]}</h3>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-4 gap-2 w-full md:w-auto">
+                                         
+                                        {[
+                                            { v: upcoming.d, l: 'Ngày' },
+                                            { v: upcoming.h_left, l: 'Giờ' },
+                                            { v: upcoming.m_left, l: 'Phút' },
+                                            { v: upcoming.s_left, l: 'Giây', red: true }
+
+                                        ].map((t, i) => (
+                                            <div key={i} className={`flex flex-col items-center justify-center py-2 px-2 sm:px-4 rounded-xl ${upcoming.isToday ? 'bg-yellow-500/5 border border-yellow-500/10' : 'bg-[#111111] border border-white/[0.03]'}`}>
+                                                <span className={`text-lg sm:text-xl font-black tabular-nums ${t.red ? (upcoming.isToday ? 'text-yellow-500' : 'text-red-500') : 'text-white'}`}>{String(t.v).padStart(2, '0')}</span>
+                                                <span className="text-[7px] sm:text-[8px] font-black text-slate-600 uppercase mt-0.5 tracking-widest">{lang === 'vi' ? t.l : t.l.substring(0,3)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="w-full space-y-3 pt-5 border-t border-white/[0.03] relative z-10">  
+                                    <div className="flex justify-between items-center text-[9px] font-black uppercase text-slate-500 tracking-widest px-1">
+                                        <span>{lang === 'vi' ? 'Năm ' : 'Year '}{now.getFullYear()}</span>
+                                        <span className="text-slate-300 drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">{yearProgress}%</span>
+                                    </div>
+
+                                    <div className="w-full h-[2px] bg-[#1a1a1a] rounded-full relative mt-2">
+                                        <div
+                                            className="absolute top-0 left-0 h-[2px] bg-gradient-to-r from-red-900 to-red-500 rounded-full transition-all duration-[2000ms] ease-out"
+                                            style={{ width: mounted ? `${yearProgress}%` : '0%' }}                                      
+                                        >
+
+                                            <div className="absolute inset-0 w-full h-full bg-gradient-to-l from-transparent via-white/50 to-transparent animate-[shimmer-reverse_2s_infinite_linear] rounded-full overflow-hidden"></div>
+                                         
+                                            <div className="absolute right-0 top-1/2 w-1.5 h-1.5 bg-white rounded-full animate-[radiate_1.5s_infinite_ease-in-out] z-10"></div>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div>
+                        </section>
+                    )}
+                
+                </div>
+            </div>
+        </>
+    );
+}
